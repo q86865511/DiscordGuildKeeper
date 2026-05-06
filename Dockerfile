@@ -50,7 +50,8 @@ WORKDIR /app
 COPY --from=builder --chown=butler:butler /app/.venv /app/.venv
 COPY --chown=butler:butler src ./src
 COPY --chown=butler:butler scripts ./scripts
-COPY --chown=butler:butler pyproject.toml README.md ./
+COPY --chown=butler:butler migrations ./migrations
+COPY --chown=butler:butler alembic.ini pyproject.toml README.md ./
 
 RUN chmod +x ./scripts/entrypoint.sh
 
