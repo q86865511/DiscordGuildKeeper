@@ -18,6 +18,8 @@ def _clear_butler_env(monkeypatch: pytest.MonkeyPatch) -> None:
     keys = [
         "APP_ENV",
         "DISCORD_TOKEN",
+        "DISCORD_GUILD_ID",
+        "DISCORD_ADMIN_ROLE_ID",
         "DATABASE_URL",
         "REDIS_URL",
         "GEMINI_API_KEY",
@@ -73,6 +75,32 @@ def test_settings_production_with_required_envs_succeeds(
     settings = Settings(_env_file=None)
     assert settings.discord_token == "token-xyz"
     assert settings.app_env == "production"
+
+
+@pytest.mark.parametrize("blank", ["", "   ", "\t"])
+def test_blank_optional_int_env_treated_as_none(
+    monkeypatch: pytest.MonkeyPatch, blank: str
+) -> None:
+    """Empty ``KEY=`` lines in ``.env`` must not crash int|None fields.
+
+    Regression: an unset DISCORD_GUILD_ID arrived as ``""`` and pydantic
+    failed with ``int_parsing`` before the bot could even log anything.
+    """
+    _clear_butler_env(monkeypatch)
+    monkeypatch.setenv("DISCORD_GUILD_ID", blank)
+    monkeypatch.setenv("DISCORD_ADMIN_ROLE_ID", blank)
+    settings = Settings(_env_file=None)
+    assert settings.discord_guild_id is None
+    assert settings.discord_admin_role_id is None
+
+
+def test_optional_ints_parse_when_set(monkeypatch: pytest.MonkeyPatch) -> None:
+    _clear_butler_env(monkeypatch)
+    monkeypatch.setenv("DISCORD_GUILD_ID", "123456789")
+    monkeypatch.setenv("DISCORD_ADMIN_ROLE_ID", "987654321")
+    settings = Settings(_env_file=None)
+    assert settings.discord_guild_id == 123456789
+    assert settings.discord_admin_role_id == 987654321
 
 
 def test_configure_logging_json_emits_one_event_per_line(

@@ -11,9 +11,9 @@ See PROJECT_SPEC.md §7.
 
 from __future__ import annotations
 
-from typing import Self
+from typing import Any, Self
 
-from pydantic import model_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -77,6 +77,23 @@ class Settings(BaseSettings):
 
     # --- M6+ Cloudflare Tunnel ---
     tunnel_token: str | None = None
+
+    @field_validator(
+        "discord_guild_id",
+        "discord_admin_role_id",
+        mode="before",
+    )
+    @classmethod
+    def _blank_str_to_none(cls, value: Any) -> Any:
+        """Treat blank ``.env`` entries (``KEY=``) as unset for optional ints.
+
+        ``.env.example`` ships with many keys present but empty so users can fill
+        them in later. pydantic-settings hands those through as ``""``, which
+        cannot be coerced to ``int | None``. Coerce blanks to ``None`` here.
+        """
+        if isinstance(value, str) and value.strip() == "":
+            return None
+        return value
 
     @model_validator(mode="after")
     def _require_critical_in_production(self) -> Self:
