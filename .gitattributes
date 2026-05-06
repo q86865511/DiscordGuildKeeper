@@ -1,0 +1,11 @@
+# Force LF on all text files regardless of platform / core.autocrlf.
+# Critical for shell scripts and Dockerfile, which must use LF in containers.
+* text=auto eol=lf
+
+# Binary files — leave alone
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
